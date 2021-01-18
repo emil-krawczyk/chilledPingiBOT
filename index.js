@@ -17,14 +17,121 @@ const status = config.status
 
 const chalk = require("chalk")
 
+const missingPermissions = new Discord.RichEmbed()
+    .setTitle('🛑 Missing Permissions')
+    .setDescription(`${member}, you don'thave permissions to do this.`)
+    .setFooter('PingiBOT', 'https://cdn.discordapp.com/app-icons/779349541362204754/555ee6dd92bd5541aaba57486ba61c1b.png')
+    .setColor('#FF4C14')
+
 //przygotowanie klienta do pracy
 
 client.on('ready', () => {
     console.log('Client is ready.')
 
+    command(client, '&ban', (message) => {
+        const { member, mentions } = message
+    
+        const tag = `<@${member.id}>`
+    
+        if (
+          member.hasPermission('ADMINISTRATOR') ||
+          member.hasPermission('BAN_MEMBERS')
+        ) {
+          const target = mentions.users.first()
+          if (target) {
+            const targetMember = message.guild.members.get(target.id)
+
+            const channel = member.guild.channels.get('798583490970124318');
+    
+            const banEmbed = new Discord.RichEmbed()
+            .setTitle('[*]')
+            .setDescription(`${targetMember} has been banned.`)
+            .setColor('#EBC91E')
+            .setFooter('Server Administration')
+
+            targetMember.ban()
+
+            message.channel.send(`Succesfully banned ${targetMember}.`)
+	        channel.send(banEmbed);
+            
+          } else {
+            message.channel.send(`❓ Please specify user to ban.`)
+          }
+        } else {
+          message.channel.send(missingPermissions)
+        }
+      })
+
+      command(client, '&mute', (message) => {
+        const { member, mentions } = message
+    
+        const tag = `<@${member.id}>`
+    
+        if (
+          member.hasPermission('ADMINISTRATOR') ||
+          member.hasPermission('BAN_MEMBERS')
+        ) {
+          const target = mentions.users.first()
+          if (target) {
+            const targetMember = message.guild.members.get(target.id)
+
+            const channel = member.guild.channels.get('798583490970124318');
+
+            const muted = member.guild.roles.get('797868333965246535')
+    
+            const muteEmbed = new Discord.RichEmbed()
+            .setTitle('Ajć')
+            .setDescription(`${targetMember} has been muted.`)
+            .setColor('#EBC91E')
+            .setFooter('Server Administrations')
+            
+            targetMember.addRole(muted)
+
+            message.channel.send(`Succesfully muted ${targetMember}`)
+	        channel.send(muteEmbed);
+            
+          } else {
+            message.channel.send(`Please specify user to mute.`)
+          }
+        } else {
+          message.channel.send(missingPermissions)
+        }
+      })
+
+      command(client, '&unmute', (message) => {
+        const { member, mentions } = message
+    
+        const tag = `<@${member.id}>`
+    
+        if (
+          member.hasPermission('ADMINISTRATOR') ||
+          member.hasPermission('BAN_MEMBERS')
+        ) {
+          const target = mentions.users.first()
+          if (target) {
+            const targetMember = message.guild.members.get(target.id)
+
+            const channel = member.guild.channels.get('798583490970124318');
+
+            const muted = member.guild.roles.get('797868333965246535')
+
+            targetMember.removeRole(muted)
+
+            message.channel.send(`Succesfully unmute ${targetMember}`)
+            
+          } else {
+            message.channel.send(`Please specify user to unmute.`)
+          }
+        } else {
+          message.channel.send(missingPermissions)
+        }
+      })
+
     //ustawienie statusu początkowego
 
     client.user.setActivity(status)
+
+    
 })
 
 //powitanie
@@ -63,16 +170,6 @@ command(client, '&ping', message => {
     message.channel.send('Pong!')
 }),
 
-command(client, '&memberaddemit', message => {
-    client.emit('guildMemberAdd');
-    message.channel.send('Wyemitowano zdarzenie "guildMemberAdd".')
-})
-
-command(client, '&memberremoveemit', message => {
-    client.emit('guildMemberRemove');
-    message.channel.send('Wyemitowano zdarzenie "guildMemberRemove".')
-})
-
 //lista komend
 
 command(client, '&help', message => {
@@ -97,12 +194,12 @@ command(client, ['&kudłacz', '&shaggy'], message => {
 })
 
 client.on("message", msg => {
-    const { author, guild } = msg
+    const { author, guild, content} = msg
+
+    if(msg.author.bot) return;
   
-  
-    if (msg.content.toLowerCase() === "xd") {
-      msg.channel.send("xDDDDD");
-    }
+    if (content.toLowerCase().startsWith('xd') || content.toLowerCase() === 'xd') {
+      msg.channel.send("xDDDDD")}
   });
 
 
@@ -139,31 +236,36 @@ client.on("message", msg => {
 
 //status
 
-// command(client, '&status', message => {
-//     const content = message.content.replace('&status ', '')
+command(client, '&status', message => {
 
-//     if (content === 'clear') {
-//         console.log('Czyszczenie statusu...')
-//         message.channel.send('Czyszczę status...')
-//         client.user.setActivity(status)
-//         message.channel.send('Status wyczyszczony pomyślnie.')
-//     }
-
-//     else {
-//         if (content === 'hard-clear') {
-//             message.channel.send('Czyszczenie statusu...')
-//             client.user.setActivity('')
-//             message.channel.send('Status wyczyszczony. Możesz go przywrócić, wpisując `&status clear`.')
-//         }
-
-//         else {
-//             message.channel.send('Ustawiam status...')
-//             client.user.setActivity(content)
-//             message.channel.send(`Zmieniono status na "${content}".`)
-//         }
-//     }
-
-// }),
+    const { member, mentions } = message
+  
+    const content = message.content.replace('&status ', '')
+  
+    if (member.hasPermission('ADMINISTRATOR')) {
+      if (content === 'clear') {
+        console.log('Clearing status...')
+        message.channel.send('Clearing status...')
+        client.user.setActivity(status)
+        message.channel.send('Status has been succesfully cleared.')}
+  
+        else { if (content === 'hard-clear') {
+            message.channel.send('Deleting status...')
+            client.user.setActivity('')
+            message.channel.send('Status has been deleted. You can restore it, typing: `&status clear`.')}
+  
+        else {
+            message.channel.send('Settings status...')
+            client.user.setActivity(content)
+            message.channel.send(`Status has been set to: "${content}".`)}} 
+    }
+  
+    else {
+       
+      message.channel.send(missingPermissions)
+    }
+  
+  })
 
 //token
 
